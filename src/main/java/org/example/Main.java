@@ -12,50 +12,45 @@ public class Main {
 
         Scanner scanner = new Scanner(System.in);
 
+        // ===== MAIN APPLICATION LOOP =====
         while (true) {
 
-            printMenu();
+            UI.printHeader();
+
+            System.out.println("D) Add Deposit");
+            System.out.println("P) Make Payment");
+            System.out.println("L) Ledger");
+            System.out.println("X) Exit");
+            System.out.print("Select: ");
 
             String choice = scanner.nextLine().toUpperCase();
 
             switch (choice) {
 
                 case "D":
-                    addDeposit(scanner);
+                    addTransaction(scanner, true);
                     break;
 
                 case "P":
-                    makePayment(scanner);
+                    addTransaction(scanner, false);
                     break;
 
                 case "L":
-                    showLedger();
+                    ledgerMenu(scanner);
                     break;
 
                 case "X":
-                    System.out.println("Goodbye!");
+                    UI.success("Thanks for using the app. See you next time!");
                     return;
 
                 default:
-                    System.out.println("Invalid option");
+                    UI.error("Invalid option");
             }
         }
     }
 
-    // ================= MENU =================
-    public static void printMenu() {
-        System.out.println("\n====================================");
-        System.out.println("      ACCOUNTING LEDGER APP");
-        System.out.println("====================================");
-        System.out.println("D) Add Deposit");
-        System.out.println("P) Make Payment");
-        System.out.println("L) Ledger");
-        System.out.println("X) Exit");
-        System.out.print("Select: ");
-    }
-
-    // ================= DEPOSIT =================
-    public static void addDeposit(Scanner scanner) {
+    // ===== ADD NEW TRANSACTION (DEPOSIT OR PAYMENT) =====
+    public static void addTransaction(Scanner scanner, boolean isDeposit) {
 
         System.out.print("Description: ");
         String description = scanner.nextLine();
@@ -66,55 +61,195 @@ public class Main {
         System.out.print("Amount: ");
         double amount = Double.parseDouble(scanner.nextLine());
 
+        // Ensure payments are stored as negative values
+        if (!isDeposit) {
+            amount = -Math.abs(amount);
+        }
+
+        // Create transaction object with current date and time
         Transaction t = new Transaction(
-                LocalDate.now().toString(),
-                LocalTime.now().toString(),
+                LocalDate.now(),
+                LocalTime.now().withNano(0),
                 description,
                 vendor,
                 amount
         );
 
         FileHandler.saveTransaction(t);
-
-        System.out.println("Deposit saved.");
+        UI.success("Transaction saved.");
     }
 
-    // ================= PAYMENT =================
-    public static void makePayment(Scanner scanner) {
+    // ===== LEDGER MENU (VIEW TRANSACTIONS) =====
+    public static void ledgerMenu(Scanner scanner) {
 
-        System.out.print("Description: ");
-        String description = scanner.nextLine();
+        while (true) {
 
-        System.out.print("Vendor: ");
-        String vendor = scanner.nextLine();
+            UI.title("LEDGER");
 
-        System.out.print("Amount: ");
-        double amount = Double.parseDouble(scanner.nextLine());
+            System.out.println("A) All");
+            System.out.println("D) Deposits");
+            System.out.println("P) Payments");
+            System.out.println("R) Reports");
+            System.out.println("H) Home");
+            System.out.print("Select: ");
 
-        Transaction t = new Transaction(
-                LocalDate.now().toString(),
-                LocalTime.now().toString(),
-                description,
-                vendor,
-                -amount
-        );
+            String choice = scanner.nextLine().toUpperCase();
 
-        FileHandler.saveTransaction(t);
+            ArrayList<Transaction> list = Ledger.getAllTransactions();
+            Collections.reverse(list); // Show newest first
 
-        System.out.println("Payment saved.");
+            switch (choice) {
+
+                case "A":
+                    printLedger(list);
+                    break;
+
+                case "D":
+                    ArrayList<Transaction> deposits = new ArrayList<>();
+                    for (Transaction t : list) {
+                        if (t.getAmount() > 0) deposits.add(t);
+                    }
+                    printLedger(deposits);
+                    break;
+
+                case "P":
+                    ArrayList<Transaction> payments = new ArrayList<>();
+                    for (Transaction t : list) {
+                        if (t.getAmount() < 0) payments.add(t);
+                    }
+                    printLedger(payments);
+                    break;
+
+                case "R":
+                    reports(scanner, list);
+                    break;
+
+                case "H":
+                    return;
+
+                default:
+                    UI.error("Invalid option");
+            }
+        }
     }
 
-    // ================= LEDGER =================
-    public static void showLedger() {
+    // ===== DISPLAY LEDGER IN TABLE FORMAT =====
+    public static void printLedger(ArrayList<Transaction> list) {
 
-        ArrayList<Transaction> list = Ledger.getAllTransactions();
+        System.out.println("--------------------------------------------------------------------------");
+        System.out.println("| Date       | Time  | Description            | Vendor        | Amount    |");
+        System.out.println("---------------------------------------------------------------------------");
 
-        Collections.reverse(list);
-
-        System.out.println("\n===== LEDGER =====");
+        double total = 0;
 
         for (Transaction t : list) {
             System.out.println(t);
+            total += t.getAmount();
+        }
+
+        System.out.println("---------------------------------------------------------------------------");
+        System.out.printf("TOTAL BALANCE: $%.2f%n", total);
+    }
+
+    // ===== REPORTING MODULE (FILTER TRANSACTIONS) =====
+    public static void reports(Scanner scanner, ArrayList<Transaction> list) {
+
+        UI.title("REPORTS");
+
+        System.out.println("1) Month To Date");
+        System.out.println("2) Year To Date");
+        System.out.println("3) Search by Vendor");
+        System.out.println("4) Previous Month");
+        System.out.println("5) Previous Year");
+        System.out.println("0) Back");
+        System.out.print("Select: ");
+
+        String choice = scanner.nextLine();
+        LocalDate today = LocalDate.now();
+
+        switch (choice) {
+
+            // ===== MONTH TO DATE TRANSACTIONS =====
+            case "1":
+                ArrayList<Transaction> month = new ArrayList<>();
+                for (Transaction t : list) {
+                    if (t.getDate().getYear() == today.getYear()
+                            && t.getDate().getMonth() == today.getMonth()) {
+                        month.add(t);
+                    }
+                }
+                printLedger(month);
+                break;
+
+            // ===== YEAR TO DATE TRANSACTIONS =====
+            case "2":
+                ArrayList<Transaction> year = new ArrayList<>();
+                for (Transaction t : list) {
+                    if (t.getDate().getYear() == today.getYear()) {
+                        year.add(t);
+                    }
+                }
+                printLedger(year);
+                break;
+
+            // ===== SEARCH TRANSACTIONS BY VENDOR OR DESCRIPTION =====
+            case "3":
+                System.out.print("Enter vendor/keyword: ");
+                String v = scanner.nextLine().toLowerCase();
+
+                ArrayList<Transaction> search = new ArrayList<>();
+
+                for (Transaction t : list) {
+                    if (t.getVendor().toLowerCase().contains(v)
+                            || t.getDescription().toLowerCase().contains(v)) {
+                        search.add(t);
+                    }
+                }
+
+                if (search.isEmpty()) {
+                    UI.error("No transactions found");
+                } else {
+                    printLedger(search);
+                }
+                break;
+
+            // ===== PREVIOUS MONTH TRANSACTIONS =====
+            case "4":
+                LocalDate firstDayLastMonth = today.minusMonths(1).withDayOfMonth(1);
+                LocalDate lastDayLastMonth = today.withDayOfMonth(1).minusDays(1);
+
+                ArrayList<Transaction> prevMonth = new ArrayList<>();
+
+                for (Transaction t : list) {
+                    if (!t.getDate().isBefore(firstDayLastMonth)
+                            && !t.getDate().isAfter(lastDayLastMonth)) {
+                        prevMonth.add(t);
+                    }
+                }
+
+                printLedger(prevMonth);
+                break;
+
+            // ===== PREVIOUS YEAR TRANSACTIONS =====
+            case "5":
+                int lastYear = today.getYear() - 1;
+
+                ArrayList<Transaction> prevYear = new ArrayList<>();
+
+                for (Transaction t : list) {
+                    if (t.getDate().getYear() == lastYear) {
+                        prevYear.add(t);
+                    }
+                }
+
+                printLedger(prevYear);
+                break;
+
+            case "0":
+                return;
+
+            default:
+                UI.error("Invalid option");
         }
     }
 }
