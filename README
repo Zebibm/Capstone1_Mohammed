@@ -1,0 +1,67 @@
+ Accounting Ledger Application
+  Overview
+
+This is a Java Command-Line Interface (CLI) application that allows users to track financial transactions such as deposits and payments.
+
+The application stores all transactions in a CSV file and allows users to view, filter, and generate reports based on the data.
+
+Features
+Home Screen
+Add Deposit
+Make Payment (Debit)
+View Ledger
+Exit Application
+ Ledger
+View all transactions (newest first)
+Filter deposits only
+Filter payments only
+Clean table-style display (Excel-like formatting)
+ Reports
+Month-To-Date transactions
+Year-To-Date transactions
+Search by vendor or keyword
+ Data Storage
+
+All transactions are stored in:
+
+src/main/resources/transactions.csv
+
+Each transaction follows this format:
+
+date|time|description|vendor|amount
+
+Example:
+
+2026-04-28|16:43:45|pen|Amazon|2.00
+2026-04-28|16:46:24|bill|water|-23.00
+🛠️ Technologies Used
+Java (JDK 17)
+File I/O (FileReader, FileWriter)
+ArrayList
+LocalDate and LocalTime
+CLI (Console-based UI)
+ How to Run
+Clone the repository:
+git clone https://github.com/YOUR-USERNAME/YOUR-REPO-NAME.git
+Open the project in IntelliJ IDEA (or any Java IDE)
+Run:
+Main.java
+Use the menu options in the console to interact with the application
+ What I Learned
+How to build a full Java application from scratch
+File handling using CSV (read/write)
+Using LocalDate and LocalTime for real-world data
+Debugging and problem-solving step by step
+Structuring code using classes and methods
+ Future Improvements
+Add edit/delete transaction functionality
+Add balance summary (total income vs expenses)
+Improve input validation
+Enhance UI with more advanced formatting
+ Author
+
+Zebib Mohammed
+
+ Notes
+
+This project was created as part of a capstone assignment to demonstrate Java programming skills, problem-solving ability, and application design.
