@@ -41,8 +41,8 @@ ArrayList
 LocalDate and LocalTime
 CLI (Console-based UI)
  How to Run
-Clone the repository:
-git clone https://github.com/YOUR-USERNAME/YOUR-REPO-NAME.git
+Clone the repository:https://github.com/Zebibm/Capstone1_Mohammed
+
 Open the project in IntelliJ IDEA (or any Java IDE)
 Run:
 Main.java
